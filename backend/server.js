@@ -30,8 +30,10 @@ app.use('/api/payments',   require('./routes/payments'));
 app.use('/api/timetable',  require('./routes/timetable'));
 app.use('/api/notices',    require('./routes/notices'));
 app.use('/api/inquiries',  require('./routes/inquiries'));
-app.use('/api/toppers',    require('./routes/toppers'));
-app.use('/api/dashboard',  require('./routes/dashboard'));
+app.use('/api/toppers',          require('./routes/toppers'));
+app.use('/api/dashboard',        require('./routes/dashboard'));
+app.use('/api/teachers',         require('./routes/teachers'));
+app.use('/api/teacher-payments', require('./routes/teacherPayments'));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
