@@ -442,7 +442,7 @@ export const teacherPayments = {
     ).then((data) => data.map(normalizeId));
   },
 
-  async add(payment: { teacherId: string; amount: number; paymentDate: string; monthFor?: string; paymentMode: string; receiptNote?: string }): Promise<TeacherPayment> {
+  async add(payment: { teacherId: string; lecturesCount?: number; ratePerLecture?: number; amount: number; paymentDate: string; monthFor?: string; paymentMode: string; receiptNote?: string }): Promise<TeacherPayment> {
     return apiFetch<TeacherPayment & { _id?: string }>(
       '/api/teacher-payments',
       { method: 'POST', body: JSON.stringify(payment) },

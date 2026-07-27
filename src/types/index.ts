@@ -24,6 +24,7 @@ export interface Teacher {
   phone: string;
   subject: string;
   section: string;
+  ratePerLecture: number;
   monthlySalary: number;
   joinedDate: string;
   isActive: boolean;
@@ -32,6 +33,8 @@ export interface Teacher {
 export interface TeacherPayment {
   id: string;
   teacherId: Teacher | string;
+  lecturesCount?: number;
+  ratePerLecture?: number;
   amount: number;
   paymentDate: string;
   monthFor?: string;
