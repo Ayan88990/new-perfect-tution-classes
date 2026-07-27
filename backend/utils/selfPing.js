@@ -1,19 +1,30 @@
 /**
- * selfPing.js — Keeps free-tier Render backend awake by sending self ping every 14 minutes.
+ * selfPing.js — Self-ping service to keep host instance active (e.g. Render free tier)
  */
 
 const https = require('https');
+const http = require('http');
 
 function startSelfPing() {
-  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `https://new-perfect-tution-classes.onrender.com`;
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `https://tution-back-43qq.onrender.com`;
+  const PING_INTERVAL = 9 * 60 * 1000; // Every 9 minutes
 
   setInterval(() => {
-    https.get(`${SELF_URL}/api/health`, (res) => {
-      console.log(`[SelfPing] Pinged ${SELF_URL} — status: ${res.statusCode}`);
-    }).on('error', (err) => {
-      console.error('[SelfPing] Error:', err.message);
-    });
-  }, 14 * 60 * 1000); // 14 mins
+    try {
+      const url = new URL(`${SELF_URL}/api/health`);
+      const client = url.protocol === 'https:' ? https : http;
+      const req = client.get(url.href, (res) => {
+        console.log(`🏓 Self-ping OK — Status: ${res.statusCode}`);
+        res.resume();
+      });
+      req.on('error', (err) => console.warn(`⚠️ Self-ping failed: ${err.message}`));
+      req.setTimeout(10000, () => { req.destroy(); });
+    } catch (e) {
+      console.warn('⚠️ Self-ping URL error:', e.message);
+    }
+  }, PING_INTERVAL);
+
+  console.log('🏓 Self-ping service started (every 9 minutes)');
 }
 
 module.exports = startSelfPing;

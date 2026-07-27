@@ -3,15 +3,19 @@
  * Supplies both autoSeedIfEmpty (on app start) and seedDatabase (for script/manual triggers).
  */
 
+const Teacher = require('../models/Teacher');
+const TeacherPayment = require('../models/TeacherPayment');
 const Student = require('../models/Student');
 const Attendance = require('../models/Attendance');
 const Payment = require('../models/Payment');
 const Timetable = require('../models/Timetable');
 const Notice = require('../models/Notice');
 const {
+  initialTeachers,
   initialStudents,
   getInitialAttendance,
   getInitialPayments,
+  getInitialTeacherPayments,
   initialTimetable,
   getInitialNotices,
 } = require('../data/seedData');
@@ -38,6 +42,8 @@ async function autoSeedIfEmpty() {
 async function seedDatabase(clearExisting = false) {
   if (clearExisting) {
     await Promise.all([
+      Teacher.deleteMany({}),
+      TeacherPayment.deleteMany({}),
       Student.deleteMany({}),
       Attendance.deleteMany({}),
       Payment.deleteMany({}),
@@ -46,6 +52,15 @@ async function seedDatabase(clearExisting = false) {
     ]);
     console.log('🗑️ Cleared existing data');
   }
+
+  const teachers = await Teacher.insertMany(initialTeachers);
+  console.log(`✅ Inserted ${teachers.length} teachers`);
+
+  const byTeacherName = {};
+  teachers.forEach((t) => { byTeacherName[t.name] = t._id; });
+
+  await TeacherPayment.insertMany(getInitialTeacherPayments(byTeacherName));
+  console.log('✅ Inserted teacher payments');
 
   const students = await Student.insertMany(initialStudents);
   console.log(`✅ Inserted ${students.length} students`);
