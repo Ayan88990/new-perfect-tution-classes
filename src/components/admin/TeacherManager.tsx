@@ -9,11 +9,14 @@ const EMPTY_TEACHER_FORM = {
   phone: '',
   subject: '',
   section: 'All Sections',
+  ratePerLecture: '500',
   monthlySalary: '',
 };
 
 const EMPTY_PAYMENT_FORM = {
   teacherId: '',
+  lecturesCount: '',
+  ratePerLecture: '500',
   amount: '',
   paymentDate: new Date().toISOString().split('T')[0],
   monthFor: '',
@@ -67,6 +70,7 @@ export default function TeacherManager() {
       phone: teacherForm.phone,
       subject: teacherForm.subject,
       section: teacherForm.section || 'All Sections',
+      ratePerLecture: parseFloat(teacherForm.ratePerLecture) || 500,
       monthlySalary: parseFloat(teacherForm.monthlySalary) || 0,
       joinedDate: new Date().toISOString().split('T')[0],
       isActive: true,
@@ -89,19 +93,63 @@ export default function TeacherManager() {
     }
   }
 
+  function handleTeacherSelect(tId: string) {
+    const found = teacherList.find(t => t.id === tId);
+    const rate = found ? (found.ratePerLecture || 500) : 500;
+    const count = parseFloat(paymentForm.lecturesCount) || 0;
+    const calcAmount = count > 0 ? count * rate : (found ? found.monthlySalary || '' : '');
+
+    setPaymentForm({
+      ...paymentForm,
+      teacherId: tId,
+      ratePerLecture: String(rate),
+      amount: String(calcAmount),
+    });
+  }
+
+  function handleLecturesCountChange(countStr: string) {
+    const count = parseFloat(countStr) || 0;
+    const rate = parseFloat(paymentForm.ratePerLecture) || 0;
+    const calcAmount = count * rate;
+
+    setPaymentForm({
+      ...paymentForm,
+      lecturesCount: countStr,
+      amount: count > 0 ? String(calcAmount) : paymentForm.amount,
+    });
+  }
+
+  function handleRateChange(rateStr: string) {
+    const rate = parseFloat(rateStr) || 0;
+    const count = parseFloat(paymentForm.lecturesCount) || 0;
+    const calcAmount = count * rate;
+
+    setPaymentForm({
+      ...paymentForm,
+      ratePerLecture: rateStr,
+      amount: count > 0 ? String(calcAmount) : paymentForm.amount,
+    });
+  }
+
   async function handlePaymentSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsSaving(true);
     setError('');
 
+    const lCount = parseFloat(paymentForm.lecturesCount) || 0;
+    const lRate = parseFloat(paymentForm.ratePerLecture) || 0;
+    const amt = parseFloat(paymentForm.amount) || (lCount * lRate);
+
     try {
       await teacherPaymentsApi.add({
         teacherId: paymentForm.teacherId,
-        amount: parseFloat(paymentForm.amount) || 0,
+        lecturesCount: lCount,
+        ratePerLecture: lRate,
+        amount: amt,
         paymentDate: paymentForm.paymentDate,
         monthFor: paymentForm.monthFor || `${new Date().toLocaleString('default', { month: 'long' })} ${new Date().getFullYear()}`,
         paymentMode: paymentForm.paymentMode,
-        receiptNote: paymentForm.receiptNote,
+        receiptNote: paymentForm.receiptNote || (lCount > 0 ? `${lCount} Lectures @ ₹${lRate}/lec` : 'Lecture Payout'),
       });
 
       setPaymentForm(EMPTY_PAYMENT_FORM);
@@ -134,13 +182,13 @@ export default function TeacherManager() {
       phone: teacher.phone,
       subject: teacher.subject,
       section: teacher.section,
-      monthlySalary: String(teacher.monthlySalary),
+      ratePerLecture: String(teacher.ratePerLecture || 500),
+      monthlySalary: String(teacher.monthlySalary || ''),
     });
     setEditingTeacherId(teacher.id);
     setShowTeacherForm(true);
   }
 
-  const totalMonthlyPayroll = teacherList.reduce((sum, t) => sum + (t.monthlySalary || 0), 0);
   const totalPaidThisMonth = paymentList.reduce((sum, p) => sum + p.amount, 0);
 
   return (
@@ -176,7 +224,7 @@ export default function TeacherManager() {
               onClick={() => setShowPaymentForm(!showPaymentForm)}
               className="btn-primary"
             >
-              {showPaymentForm ? 'Close Form' : 'Record Salary Payout'}
+              {showPaymentForm ? 'Close Form' : 'Record Lecture Payout'}
             </button>
           )}
         </div>
@@ -189,8 +237,8 @@ export default function TeacherManager() {
           <div style={{ fontSize: '1.375rem', fontWeight: 800, color: '#f8fafc' }}>{teacherList.length}</div>
         </div>
         <div className="stat-card purple" style={{ padding: '0.875rem' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Est. Monthly Payroll</div>
-          <div style={{ fontSize: '1.375rem', fontWeight: 800, color: '#f8fafc' }}>₹{totalMonthlyPayroll.toLocaleString()}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Payment System</div>
+          <div style={{ fontSize: '1.375rem', fontWeight: 800, color: '#38bdf8' }}>Per Lecture</div>
         </div>
         <div className="stat-card amber" style={{ padding: '0.875rem' }}>
           <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Total Payouts Logged</div>
@@ -230,8 +278,8 @@ export default function TeacherManager() {
                 <input className="input-field" value={teacherForm.section} onChange={(e) => setTeacherForm({ ...teacherForm, section: e.target.value })} placeholder="e.g. 10th SSC & 9th" />
               </div>
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Monthly Base Salary (₹)</label>
-                <input className="input-field" type="number" value={teacherForm.monthlySalary} onChange={(e) => setTeacherForm({ ...teacherForm, monthlySalary: e.target.value })} placeholder="e.g. 30000" min="0" />
+                <label style={{ fontSize: '0.75rem', color: '#38bdf8', display: 'block', marginBottom: '0.375rem', fontWeight: 700 }}>Rate Per Lecture (₹/lecture) *</label>
+                <input className="input-field" type="number" value={teacherForm.ratePerLecture} onChange={(e) => setTeacherForm({ ...teacherForm, ratePerLecture: e.target.value })} placeholder="e.g. 500" required min="1" />
               </div>
             </div>
 
@@ -251,7 +299,7 @@ export default function TeacherManager() {
       {showPaymentForm && activeTab === 'payments' && (
         <div className="card" style={{ padding: '1.5rem' }}>
           <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#f8fafc', marginBottom: '1rem' }}>
-            Record Faculty Salary Payout
+            Record Teacher Per-Lecture Payout
           </h3>
 
           {error && (
@@ -267,29 +315,31 @@ export default function TeacherManager() {
                 <select
                   className="input-field"
                   value={paymentForm.teacherId}
-                  onChange={(e) => {
-                    const tId = e.target.value;
-                    const found = teacherList.find(t => t.id === tId);
-                    setPaymentForm({
-                      ...paymentForm,
-                      teacherId: tId,
-                      amount: found ? String(found.monthlySalary || '') : paymentForm.amount,
-                    });
-                  }}
+                  onChange={(e) => handleTeacherSelect(e.target.value)}
                   required
                 >
                   <option value="">-- Choose Teacher --</option>
                   {teacherList.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} ({t.subject})
+                      {t.name} ({t.subject} - ₹{t.ratePerLecture || 500}/lec)
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Payout Amount (₹) *</label>
-                <input className="input-field" type="number" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="e.g. 25000" required min="1" />
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Lectures Taken *</label>
+                <input className="input-field" type="number" value={paymentForm.lecturesCount} onChange={(e) => handleLecturesCountChange(e.target.value)} placeholder="e.g. 20 lectures" required min="1" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Rate Per Lecture (₹/lec) *</label>
+                <input className="input-field" type="number" value={paymentForm.ratePerLecture} onChange={(e) => handleRateChange(e.target.value)} placeholder="e.g. 500" required min="1" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#38bdf8', display: 'block', marginBottom: '0.375rem', fontWeight: 700 }}>Total Calculated Amount (₹) *</label>
+                <input className="input-field" type="number" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="Auto-calculated" required min="1" style={{ fontWeight: 700, color: '#38bdf8' }} />
               </div>
 
               <div>
@@ -312,8 +362,8 @@ export default function TeacherManager() {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Notes / Reference</label>
-                <input className="input-field" value={paymentForm.receiptNote} onChange={(e) => setPaymentForm({ ...paymentForm, receiptNote: e.target.value })} placeholder="e.g. Full Monthly Salary" />
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Notes / Remarks</label>
+                <input className="input-field" value={paymentForm.receiptNote} onChange={(e) => setPaymentForm({ ...paymentForm, receiptNote: e.target.value })} placeholder="e.g. 20 Lectures for July" />
               </div>
             </div>
 
@@ -342,7 +392,7 @@ export default function TeacherManager() {
                     <th>Faculty Member</th>
                     <th>Subject Taught</th>
                     <th>Class Handled</th>
-                    <th>Base Salary</th>
+                    <th>Per Lecture Rate</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -364,7 +414,7 @@ export default function TeacherManager() {
                         <span className="badge badge-purple">{teacher.subject}</span>
                       </td>
                       <td style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{teacher.section}</td>
-                      <td style={{ fontWeight: 600, color: '#f8fafc' }}>₹{(teacher.monthlySalary || 0).toLocaleString()} / mo</td>
+                      <td style={{ fontWeight: 700, color: '#38bdf8' }}>₹{(teacher.ratePerLecture || 500).toLocaleString()} / lecture</td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.375rem' }}>
                           <button onClick={() => startEditTeacher(teacher)} className="btn-ghost" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }}>
@@ -395,7 +445,8 @@ export default function TeacherManager() {
                 <thead>
                   <tr>
                     <th>Teacher Name</th>
-                    <th>Amount Paid</th>
+                    <th>Lectures & Rate</th>
+                    <th>Total Payout</th>
                     <th>Payout Date</th>
                     <th>Period</th>
                     <th>Payment Mode</th>
@@ -405,7 +456,7 @@ export default function TeacherManager() {
                 <tbody>
                   {paymentList.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
                         No teacher payouts recorded yet.
                       </td>
                     </tr>
@@ -413,11 +464,21 @@ export default function TeacherManager() {
                   {paymentList.map((p) => {
                     const teacherObj = typeof p.teacherId === 'object' ? p.teacherId : null;
                     const teacherName = teacherObj ? teacherObj.name : 'Faculty Member';
+                    const hasLectures = (p.lecturesCount || 0) > 0;
                     return (
                       <tr key={p.id}>
                         <td>
                           <div style={{ fontWeight: 600, color: '#f8fafc' }}>{teacherName}</div>
                           {p.receiptNote && <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{p.receiptNote}</div>}
+                        </td>
+                        <td>
+                          {hasLectures ? (
+                            <div style={{ fontSize: '0.8125rem', color: '#f8fafc' }}>
+                              <strong>{p.lecturesCount}</strong> lectures @ ₹{p.ratePerLecture}/lec
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Direct Payout</span>
+                          )}
                         </td>
                         <td style={{ fontWeight: 700, color: '#38bdf8' }}>₹{p.amount.toLocaleString()}</td>
                         <td style={{ fontSize: '0.875rem', color: '#94a3b8' }}>{p.paymentDate}</td>

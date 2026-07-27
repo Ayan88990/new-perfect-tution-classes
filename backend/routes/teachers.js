@@ -15,13 +15,14 @@ router.get('/', async (req, res) => {
 // POST /api/teachers
 router.post('/', async (req, res) => {
   try {
-    const { name, phone, subject, section, monthlySalary, joinedDate } = req.body;
+    const { name, phone, subject, section, ratePerLecture, monthlySalary, joinedDate } = req.body;
     if (!name || !phone || !subject) {
       return res.status(400).json({ error: 'Name, phone, and subject are required' });
     }
     const teacher = new Teacher({
       name, phone, subject,
       section: section || 'All Sections',
+      ratePerLecture: Number(ratePerLecture) || 500,
       monthlySalary: Number(monthlySalary) || 0,
       joinedDate: joinedDate || new Date().toISOString().split('T')[0],
       isActive: true,

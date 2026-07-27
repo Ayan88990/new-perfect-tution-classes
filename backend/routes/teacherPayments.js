@@ -26,12 +26,14 @@ router.get('/teacher/:teacherId', async (req, res) => {
 // POST /api/teacher-payments
 router.post('/', async (req, res) => {
   try {
-    const { teacherId, amount, paymentDate, monthFor, paymentMode, receiptNote } = req.body;
+    const { teacherId, lecturesCount, ratePerLecture, amount, paymentDate, monthFor, paymentMode, receiptNote } = req.body;
     if (!teacherId || !amount) {
       return res.status(400).json({ error: 'Teacher ID and amount are required' });
     }
     const payment = new TeacherPayment({
       teacherId,
+      lecturesCount: Number(lecturesCount) || 0,
+      ratePerLecture: Number(ratePerLecture) || 0,
       amount: Number(amount),
       paymentDate: paymentDate || new Date().toISOString().split('T')[0],
       monthFor: monthFor || '',
