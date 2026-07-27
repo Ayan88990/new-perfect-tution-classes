@@ -4,9 +4,9 @@
  */
 
 const initialTeachers = [
-  { name: 'Firoz Sir', phone: '9925432574', subject: 'Mathematics & Physics', section: '10th SSC & 9th', ratePerLecture: 600, monthlySalary: 35000, joinedDate: '2025-05-01', isActive: true },
-  { name: 'Sameer Sir', phone: '9879012345', subject: 'English & Social Studies', section: '9th & 10th', ratePerLecture: 500, monthlySalary: 28000, joinedDate: '2025-06-01', isActive: true },
-  { name: 'Ayesha Madam', phone: '9765432109', subject: 'All Subjects (Primary)', section: 'Primary Section', ratePerLecture: 400, monthlySalary: 22000, joinedDate: '2025-07-01', isActive: true },
+  { name: 'Firoz Sir', phone: '9925432574', subject: 'Mathematics & Physics', section: '10th SSC & 9th', rate1h: 300, rate1_5h: 400, rate2h: 500, joinedDate: '2025-05-01', isActive: true },
+  { name: 'Sameer Sir', phone: '9879012345', subject: 'English & Social Studies', section: '9th & 10th', rate1h: 300, rate1_5h: 400, rate2h: 500, joinedDate: '2025-06-01', isActive: true },
+  { name: 'Ayesha Madam', phone: '9765432109', subject: 'All Subjects (Primary)', section: 'Primary Section', rate1h: 250, rate1_5h: 350, rate2h: 450, joinedDate: '2025-07-01', isActive: true },
 ];
 
 const initialStudents = [

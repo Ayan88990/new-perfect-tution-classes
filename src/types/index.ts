@@ -18,14 +18,33 @@ export interface Student {
   isActive: boolean;
 }
 
+export interface TeacherLectureSlot {
+  id: string;
+  day: string;
+  subject: string;
+  section: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  durationLabel: string;
+  amount: number;
+}
+
 export interface Teacher {
   id: string;
   name: string;
   phone: string;
   subject: string;
   section: string;
-  ratePerLecture: number;
-  monthlySalary: number;
+  rate1h: number;
+  rate1_5h: number;
+  rate2h: number;
+  lastSettledDate?: string;
+  totalLecturesCount?: number;
+  totalEarned?: number;
+  totalPaid?: number;
+  pendingBalance?: number;
+  lectureHistory?: TeacherLectureSlot[];
   joinedDate: string;
   isActive: boolean;
 }
