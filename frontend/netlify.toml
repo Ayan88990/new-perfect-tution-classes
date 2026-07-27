@@ -2,4 +2,4 @@
   command = "npm run build"
 
 [build.environment]
-  NEXT_PUBLIC_API_URL = "https://tution-back-43qq.onrender.com"
+  NEXT_PUBLIC_API_URL = "https://new-perfect-tution-classes.onrender.com"

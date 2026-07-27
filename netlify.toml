@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_PUBLIC_API_URL = "https://new-perfect-tution-classes.onrender.com"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
