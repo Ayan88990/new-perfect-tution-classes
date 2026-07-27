@@ -4,9 +4,9 @@
  */
 
 const initialTeachers = [
-  { name: 'Firoz Sir', phone: '9925432574', subject: 'Mathematics & Physics', section: '10th SSC & 9th', monthlySalary: 35000, joinedDate: '2025-05-01', isActive: true },
-  { name: 'Sameer Sir', phone: '9879012345', subject: 'English & Social Studies', section: '9th & 10th', monthlySalary: 28000, joinedDate: '2025-06-01', isActive: true },
-  { name: 'Ayesha Madam', phone: '9765432109', subject: 'All Subjects (Primary)', section: 'Primary Section', monthlySalary: 22000, joinedDate: '2025-07-01', isActive: true },
+  { name: 'Firoz Sir', phone: '9925432574', subject: 'Mathematics & Physics', section: '10th SSC & 9th', ratePerLecture: 600, monthlySalary: 35000, joinedDate: '2025-05-01', isActive: true },
+  { name: 'Sameer Sir', phone: '9879012345', subject: 'English & Social Studies', section: '9th & 10th', ratePerLecture: 500, monthlySalary: 28000, joinedDate: '2025-06-01', isActive: true },
+  { name: 'Ayesha Madam', phone: '9765432109', subject: 'All Subjects (Primary)', section: 'Primary Section', ratePerLecture: 400, monthlySalary: 22000, joinedDate: '2025-07-01', isActive: true },
 ];
 
 const initialStudents = [
@@ -55,9 +55,9 @@ function getInitialPayments(byRoll) {
 
 function getInitialTeacherPayments(byTeacherName) {
   return [
-    { teacherId: byTeacherName['Firoz Sir'], amount: 35000, paymentDate: '2026-07-01', monthFor: 'June 2026', paymentMode: 'bank_transfer', receiptNote: 'Monthly Salary Payout' },
-    { teacherId: byTeacherName['Sameer Sir'], amount: 28000, paymentDate: '2026-07-01', monthFor: 'June 2026', paymentMode: 'upi', receiptNote: 'Monthly Salary Payout' },
-    { teacherId: byTeacherName['Ayesha Madam'], amount: 22000, paymentDate: '2026-07-02', monthFor: 'June 2026', paymentMode: 'cash', receiptNote: 'Monthly Salary Payout' },
+    { teacherId: byTeacherName['Firoz Sir'], lecturesCount: 25, ratePerLecture: 600, amount: 15000, paymentDate: '2026-07-01', monthFor: 'June 2026', paymentMode: 'bank_transfer', receiptNote: '25 Lectures @ ₹600/lec' },
+    { teacherId: byTeacherName['Sameer Sir'], lecturesCount: 20, ratePerLecture: 500, amount: 10000, paymentDate: '2026-07-01', monthFor: 'June 2026', paymentMode: 'upi', receiptNote: '20 Lectures @ ₹500/lec' },
+    { teacherId: byTeacherName['Ayesha Madam'], lecturesCount: 18, ratePerLecture: 400, amount: 7200, paymentDate: '2026-07-02', monthFor: 'June 2026', paymentMode: 'cash', receiptNote: '18 Lectures @ ₹400/lec' },
   ];
 }
 
