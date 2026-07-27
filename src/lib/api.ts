@@ -428,6 +428,17 @@ export const teachers = {
       true,
     );
   },
+
+  async clearBalance(id: string, paymentMode = 'upi', receiptNote = ''): Promise<{ message: string; payment: TeacherPayment }> {
+    return apiFetch<{ message: string; payment: TeacherPayment }>(
+      `/api/teachers/${id}/clear-balance`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ paymentMode, receiptNote }),
+      },
+      true,
+    );
+  },
 };
 
 // ─── Teacher Payments ──────────────────────────────────────────────────────────
