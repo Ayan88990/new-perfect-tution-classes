@@ -6,6 +6,7 @@
 import type {
   Student, AttendanceRecord, FeePayment, TimetableSlot,
   Notice, Inquiry, StudentWithStats, BatchSection, Topper,
+  Teacher, TeacherPayment,
 } from '@/types';
 import { localStore } from './localStore';
 
@@ -388,6 +389,72 @@ export const toppers = {
       { method: 'DELETE' },
       true,
       () => localStore.deleteTopper(id),
+    );
+  },
+};
+
+// ─── Teachers / Faculty ────────────────────────────────────────────────────────
+
+export const teachers = {
+  async getAll(): Promise<Teacher[]> {
+    return apiFetch<(Teacher & { _id?: string })[]>(
+      '/api/teachers',
+      {},
+      true,
+      () => [],
+    ).then((data) => data.map(normalizeId));
+  },
+
+  async add(teacher: Omit<Teacher, 'id'>): Promise<Teacher> {
+    return apiFetch<Teacher & { _id?: string }>(
+      '/api/teachers',
+      { method: 'POST', body: JSON.stringify(teacher) },
+      true,
+    ).then(normalizeId);
+  },
+
+  async update(id: string, updates: Partial<Teacher>): Promise<Teacher> {
+    return apiFetch<Teacher & { _id?: string }>(
+      `/api/teachers/${id}`,
+      { method: 'PUT', body: JSON.stringify(updates) },
+      true,
+    ).then(normalizeId);
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(
+      `/api/teachers/${id}`,
+      { method: 'DELETE' },
+      true,
+    );
+  },
+};
+
+// ─── Teacher Payments ──────────────────────────────────────────────────────────
+
+export const teacherPayments = {
+  async getAll(): Promise<TeacherPayment[]> {
+    return apiFetch<(TeacherPayment & { _id?: string })[]>(
+      '/api/teacher-payments',
+      {},
+      true,
+      () => [],
+    ).then((data) => data.map(normalizeId));
+  },
+
+  async add(payment: { teacherId: string; amount: number; paymentDate: string; monthFor?: string; paymentMode: string; receiptNote?: string }): Promise<TeacherPayment> {
+    return apiFetch<TeacherPayment & { _id?: string }>(
+      '/api/teacher-payments',
+      { method: 'POST', body: JSON.stringify(payment) },
+      true,
+    ).then(normalizeId);
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(
+      `/api/teacher-payments/${id}`,
+      { method: 'DELETE' },
+      true,
     );
   },
 };

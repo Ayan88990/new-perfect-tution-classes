@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { students as studentsApi } from '@/lib/api';
 import { Student, BatchSection } from '@/types';
 
-const SECTIONS: { key: BatchSection; label: string }[] = [
-  { key: '9th', label: 'Class 9' },
-  { key: '10th', label: '10th SSC Board' },
-  { key: 'others', label: 'Primary Section' },
+const SECTIONS: { key: BatchSection; label: string; defaultFee: number }[] = [
+  { key: '9th', label: 'Class 9', defaultFee: 12000 },
+  { key: '10th', label: '10th SSC Board', defaultFee: 15000 },
+  { key: 'others', label: 'Primary Section', defaultFee: 8000 },
 ];
 
 const EMPTY_FORM = {
   name: '', parentName: '', parentPhone: '', section: '9th' as BatchSection,
-  totalFee: '', rollNumber: '', address: '',
+  baseFee: '12000', discount: '0', discountReason: '', totalFee: '12000',
+  rollNumber: '', address: '',
 };
 
 export default function StudentManager() {
@@ -40,6 +41,46 @@ export default function StudentManager() {
 
   useEffect(() => { loadStudents(); }, []);
 
+  // Recalculate totalFee whenever baseFee or discount changes
+  function updateFeeFields(base: number, disc: number) {
+    const net = Math.max(0, base - disc);
+    return String(net);
+  }
+
+  function handleSectionChange(newSec: BatchSection) {
+    const secObj = SECTIONS.find(s => s.key === newSec);
+    const newBase = secObj ? secObj.defaultFee : 12000;
+    const currentDisc = parseFloat(form.discount) || 0;
+    const net = Math.max(0, newBase - currentDisc);
+
+    setForm({
+      ...form,
+      section: newSec,
+      baseFee: String(newBase),
+      totalFee: String(net),
+    });
+  }
+
+  function handleBaseFeeChange(val: string) {
+    const base = parseFloat(val) || 0;
+    const disc = parseFloat(form.discount) || 0;
+    setForm({
+      ...form,
+      baseFee: val,
+      totalFee: updateFeeFields(base, disc),
+    });
+  }
+
+  function handleDiscountChange(val: string) {
+    const base = parseFloat(form.baseFee) || 0;
+    const disc = parseFloat(val) || 0;
+    setForm({
+      ...form,
+      discount: val,
+      totalFee: updateFeeFields(base, disc),
+    });
+  }
+
   const filtered = studentList.filter((s) => {
     const matchSection = sectionFilter === 'all' || s.section === sectionFilter;
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,12 +93,19 @@ export default function StudentManager() {
     e.preventDefault();
     setIsSaving(true);
     setError('');
+    const baseVal = parseFloat(form.baseFee) || 0;
+    const discVal = parseFloat(form.discount) || 0;
+    const totalVal = Math.max(0, baseVal - discVal);
+
     const data = {
       name: form.name,
       parentName: form.parentName,
       parentPhone: form.parentPhone,
       section: form.section,
-      totalFee: parseFloat(form.totalFee) || 0,
+      baseFee: baseVal,
+      discount: discVal,
+      discountReason: form.discountReason,
+      totalFee: totalVal,
       rollNumber: form.rollNumber,
       address: form.address,
       joinedDate: new Date().toISOString().split('T')[0],
@@ -81,11 +129,16 @@ export default function StudentManager() {
   }
 
   function startEdit(student: Student) {
+    const bFee = student.baseFee || student.totalFee;
+    const disc = student.discount || 0;
     setForm({
       name: student.name,
       parentName: student.parentName,
       parentPhone: student.parentPhone,
       section: student.section,
+      baseFee: String(bFee),
+      discount: String(disc),
+      discountReason: student.discountReason || '',
       totalFee: String(student.totalFee),
       rollNumber: student.rollNumber,
       address: student.address,
@@ -171,14 +224,32 @@ export default function StudentManager() {
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Section / Standard *</label>
-                <select className="input-field" value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value as BatchSection })} id="student-section-select">
-                  {SECTIONS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                <select className="input-field" value={form.section} onChange={(e) => handleSectionChange(e.target.value as BatchSection)} id="student-section-select">
+                  {SECTIONS.map((s) => <option key={s.key} value={s.key}>{s.label} (Base: ₹{s.defaultFee.toLocaleString()})</option>)}
                 </select>
               </div>
+
+              {/* Fee Auto-Load & Discount Fields */}
               <div>
-                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Total Annual Fee (₹) *</label>
-                <input className="input-field" type="number" value={form.totalFee} onChange={(e) => setForm({ ...form, totalFee: e.target.value })} placeholder="e.g. 12000" required min="0" id="student-fee-input" />
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Base Standard Fee (₹) *</label>
+                <input className="input-field" type="number" value={form.baseFee} onChange={(e) => handleBaseFeeChange(e.target.value)} placeholder="Auto-loaded" required min="0" id="student-base-fee-input" />
               </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Discount Concession (₹)</label>
+                <input className="input-field" type="number" value={form.discount} onChange={(e) => handleDiscountChange(e.target.value)} placeholder="e.g. 1000" min="0" id="student-discount-input" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Discount Reason / Remark</label>
+                <input className="input-field" value={form.discountReason} onChange={(e) => setForm({ ...form, discountReason: e.target.value })} placeholder="e.g. Sibling Concession / Merit" id="student-discount-reason-input" />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', color: '#38bdf8', display: 'block', marginBottom: '0.375rem', fontWeight: 700 }}>Net Payable Annual Fee (₹)</label>
+                <input className="input-field" type="number" value={form.totalFee} readOnly style={{ backgroundColor: '#0f172a', borderColor: '#0284c7', color: '#38bdf8', fontWeight: 700 }} id="student-net-fee-input" />
+              </div>
+
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Address / Area</label>
                 <input className="input-field" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Full Address in Juhapura" id="student-address-input" />
@@ -224,7 +295,7 @@ export default function StudentManager() {
                   <th>Student</th>
                   <th>Section</th>
                   <th>Parent / Phone</th>
-                  <th>Total Fee</th>
+                  <th>Fee Structure</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -236,34 +307,45 @@ export default function StudentManager() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((student) => (
-                  <tr key={student.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: '#f8fafc' }}>{student.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Roll: {student.rollNumber}</div>
-                    </td>
-                    <td>
-                      <span className="badge badge-blue">
-                        {student.section === 'others' ? 'Primary' : `Class ${student.section}`}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ fontSize: '0.875rem', color: '#f8fafc' }}>{student.parentName}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{student.parentPhone}</div>
-                    </td>
-                    <td style={{ fontWeight: 600, color: '#f8fafc' }}>₹{student.totalFee.toLocaleString()}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.375rem' }}>
-                        <button onClick={() => startEdit(student)} className="btn-ghost" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }} id={`edit-student-${student.id}`}>
-                          Edit
-                        </button>
-                        <button onClick={() => deleteStudent(student.id)} className="btn-danger" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }} id={`delete-student-${student.id}`}>
-                          Remove
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((student) => {
+                  const hasDiscount = (student.discount || 0) > 0;
+                  return (
+                    <tr key={student.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: '#f8fafc' }}>{student.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Roll: {student.rollNumber}</div>
+                      </td>
+                      <td>
+                        <span className="badge badge-blue">
+                          {student.section === 'others' ? 'Primary' : `Class ${student.section}`}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '0.875rem', color: '#f8fafc' }}>{student.parentName}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{student.parentPhone}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 700, color: '#38bdf8' }}>₹{student.totalFee.toLocaleString()}</div>
+                        {hasDiscount && (
+                          <div style={{ fontSize: '0.7188rem', color: '#a855f7', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.125rem' }}>
+                            <span>🏷️ Discount: -₹{(student.discount || 0).toLocaleString()}</span>
+                            {student.discountReason && <span style={{ color: '#94a3b8' }}>({student.discountReason})</span>}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.375rem' }}>
+                          <button onClick={() => startEdit(student)} className="btn-ghost" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }} id={`edit-student-${student.id}`}>
+                            Edit
+                          </button>
+                          <button onClick={() => deleteStudent(student.id)} className="btn-danger" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }} id={`delete-student-${student.id}`}>
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

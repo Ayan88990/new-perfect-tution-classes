@@ -8,11 +8,35 @@ export interface Student {
   parentName: string;
   parentPhone: string;
   section: BatchSection;
+  baseFee?: number;
+  discount?: number;
+  discountReason?: string;
   totalFee: number;
   rollNumber: string;
   address: string;
   joinedDate: string; // ISO date string
   isActive: boolean;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  phone: string;
+  subject: string;
+  section: string;
+  monthlySalary: number;
+  joinedDate: string;
+  isActive: boolean;
+}
+
+export interface TeacherPayment {
+  id: string;
+  teacherId: Teacher | string;
+  amount: number;
+  paymentDate: string;
+  monthFor?: string;
+  paymentMode: PaymentMode;
+  receiptNote?: string;
 }
 
 export interface AttendanceRecord {

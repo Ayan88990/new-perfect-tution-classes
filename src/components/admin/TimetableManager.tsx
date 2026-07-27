@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { timetable as timetableApi } from '@/lib/api';
-import { TimetableSlot, BatchSection } from '@/types';
+import { timetable as timetableApi, teachers as teachersApi } from '@/lib/api';
+import { TimetableSlot, BatchSection, Teacher } from '@/types';
 
 const SECTIONS: { key: BatchSection; label: string }[] = [
   { key: '9th', label: 'Class 9' },
@@ -23,16 +23,25 @@ const EMPTY_FORM = {
 export default function TimetableManager() {
   const [section, setSection] = useState<BatchSection>('9th');
   const [slots, setSlots] = useState<TimetableSlot[]>([]);
+  const [teacherList, setTeacherList] = useState<Teacher[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCustomTeacher, setIsCustomTeacher] = useState(false);
 
   async function loadSlots() {
     setIsLoading(true);
     try {
-      const data = await timetableApi.getAll(section);
-      setSlots(data);
+      const [slotData, teacherData] = await Promise.all([
+        timetableApi.getAll(section),
+        teachersApi.getAll(),
+      ]);
+      setSlots(slotData);
+      setTeacherList(teacherData);
+      if (teacherData.length > 0 && !form.teacher) {
+        setForm(prev => ({ ...prev, teacher: teacherData[0].name }));
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -49,6 +58,7 @@ export default function TimetableManager() {
       await timetableApi.add({ ...form, section });
       setForm(EMPTY_FORM);
       setShowForm(false);
+      setIsCustomTeacher(false);
       await loadSlots();
     } catch (err) {
       console.error(err);
@@ -113,9 +123,42 @@ export default function TimetableManager() {
               <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>End Time *</label>
               <input className="input-field" type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} required id="slot-end-input" />
             </div>
+
+            {/* Teacher Selection (Database Auto-load) */}
             <div>
-              <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.375rem', fontWeight: 500 }}>Teacher Name</label>
-              <input className="input-field" value={form.teacher} onChange={(e) => setForm({ ...form, teacher: e.target.value })} placeholder="e.g. Firoz Sir" id="slot-teacher-input" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>Faculty / Teacher *</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomTeacher(!isCustomTeacher)}
+                  style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '0.6875rem', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {isCustomTeacher ? 'Choose from DB' : '+ Other Teacher'}
+                </button>
+              </div>
+
+              {!isCustomTeacher && teacherList.length > 0 ? (
+                <select
+                  className="input-field"
+                  value={form.teacher}
+                  onChange={(e) => setForm({ ...form, teacher: e.target.value })}
+                  id="slot-teacher-select"
+                >
+                  {teacherList.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name} ({t.subject})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input-field"
+                  value={form.teacher}
+                  onChange={(e) => setForm({ ...form, teacher: e.target.value })}
+                  placeholder="e.g. Firoz Sir"
+                  id="slot-teacher-input"
+                />
+              )}
             </div>
             
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>

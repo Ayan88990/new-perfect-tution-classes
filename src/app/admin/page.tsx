@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import AttendanceManager from '@/components/admin/AttendanceManager';
 import FeeManager from '@/components/admin/FeeManager';
 import StudentManager from '@/components/admin/StudentManager';
+import TeacherManager from '@/components/admin/TeacherManager';
 import TimetableManager from '@/components/admin/TimetableManager';
 import TopperManager from '@/components/admin/TopperManager';
 import BackendWakeUpBanner from '@/components/BackendWakeUpBanner';
@@ -12,13 +13,14 @@ import { dashboard } from '@/lib/api';
 import { BatchSection } from '@/types';
 import { useRequireAdmin } from '@/context/AuthContext';
 
-type AdminTab = 'dashboard' | 'attendance' | 'fees' | 'students' | 'timetable' | 'toppers';
+type AdminTab = 'dashboard' | 'attendance' | 'fees' | 'students' | 'teachers' | 'timetable' | 'toppers';
 
 const TABS: { key: AdminTab; label: string }[] = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'attendance', label: 'Attendance' },
   { key: 'fees', label: 'Fee Manager' },
   { key: 'students', label: 'Student Roster' },
+  { key: 'teachers', label: 'Faculty & Payouts' },
   { key: 'timetable', label: 'Schedules' },
   { key: 'toppers', label: 'Board Toppers' },
 ];
@@ -71,7 +73,7 @@ export default function AdminPage() {
           <h1 className="font-display" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.25rem' }}>
             Administration Dashboard
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Overview of active students, attendance tracking, fee collection, and timetables</p>
+          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Overview of active students, attendance tracking, fee collection, faculty payouts, and timetables</p>
         </div>
 
         {/* Tab Navigation */}
@@ -164,8 +166,9 @@ export default function AdminPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.875rem' }}>
                 {[
                   { label: 'Mark Attendance', tab: 'attendance' as AdminTab, desc: 'Record daily attendance' },
-                  { label: 'Record Payment', tab: 'fees' as AdminTab, desc: 'Log fee receipt' },
-                  { label: 'Register Student', tab: 'students' as AdminTab, desc: 'Add new student to roster' },
+                  { label: 'Record Student Payment', tab: 'fees' as AdminTab, desc: 'Log fee receipt' },
+                  { label: 'Faculty & Payouts', tab: 'teachers' as AdminTab, desc: 'Manage teachers & salary' },
+                  { label: 'Register Student', tab: 'students' as AdminTab, desc: 'Add new student & discount' },
                   { label: 'Class Schedule', tab: 'timetable' as AdminTab, desc: 'Update timetable slots' },
                 ].map((action) => (
                   <button
@@ -202,6 +205,12 @@ export default function AdminPage() {
         {activeTab === 'students' && (
           <div>
             <StudentManager />
+          </div>
+        )}
+
+        {activeTab === 'teachers' && (
+          <div>
+            <TeacherManager />
           </div>
         )}
 
