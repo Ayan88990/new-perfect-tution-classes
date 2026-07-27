@@ -12,8 +12,11 @@ const PORT = process.env.PORT || 5000;
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors({
   origin: (origin, callback) => {
-    // Reflect incoming origin or fallback to allow credentials safely
-    callback(null, origin || true);
+    if (!origin) return callback(null, true);
+    if (process.env.FRONTEND_URL && process.env.FRONTEND_URL !== '*') {
+      return callback(null, process.env.FRONTEND_URL);
+    }
+    callback(null, origin);
   },
   credentials: true,
 }));
